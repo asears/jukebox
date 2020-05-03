@@ -1,6 +1,7 @@
+# Jukebox
+
 **Status:** Archive (code is provided as-is, no updates expected)
 
-# Jukebox
 Code for "Jukebox: A Generative Model for Music"
 
 [Paper](https://cdn.openai.com/papers/jukebox.pdf) 
@@ -8,12 +9,13 @@ Code for "Jukebox: A Generative Model for Music"
 [Explorer](http://jukebox.openai.com/) 
 [Colab](https://colab.research.google.com/github/openai/jukebox/blob/master/jukebox/Interacting_with_Jukebox.ipynb)
 
-# Install
-``` 
+## Install (Linux/Mac)
+
+``` bash
 # Required: Sampling
 conda create --name jukebox python=3.7.5
 conda activate jukebox
-conda install mpi4py=3.0.3
+conda install -c anaconda mpi4py=3.0.3
 conda install pytorch=1.4 torchvision=0.5 cudatoolkit=10.0 -c pytorch
 git clone https://github.com/openai/jukebox.git
 cd jukebox
@@ -29,7 +31,62 @@ conda install pytorch=1.1 torchvision=0.3 cudatoolkit=10.0 -c pytorch
 pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./apex
 ```
 
-# Sampling
+## Install (Windows)
+
+*TODO: Code to be upgraded to latest Pytorch for installation with latest Python 3.x libraries.  This doesn't currently work*
+
+``` bash
+# Required: Sampling
+conda create --name jukebox python=3.7.5
+conda activate jukebox
+conda install -c intel mpi4py=3.0.3
+conda install pytorch=1.4 torchvision=0.5 cudatoolkit=10.0 -c pytorch
+git clone https://github.com/openai/jukebox.git
+cd jukebox
+pip install -r requirements.txt
+pip install -e .
+
+# Required: Training
+conda install av=7.0.01 -c conda-forge 
+pip install ./tensorboardX
+ 
+# Optional: Apex for faster training with fused_adam
+conda install pytorch=1.1 torchvision=0.3 cudatoolkit=10.0 -c pytorch
+pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./apex
+```
+
+## Dependencies
+
+### Open MPI
+
+MPI support is provided via mpi4py dependency.
+
+https://www.open-mpi.org/
+
+https://mpi4py.readthedocs.io/en/stable/
+
+Tensorflow has an install for mpiexec under /tensorflow/tools/ci_build/install/install_mpi.sh
+https://arxiv.org/abs/1603.02339
+
+```
+openmpi-bin 
+libopenmpi-dev
+```
+
+## Microsoft MPI & Microsoft HPC Pack - mpiexec
+
+https://docs.microsoft.com/en-us/powershell/high-performance-computing/microsoft-hpc-pack-command-reference?view=hpc16-ps
+
+Microsoft MPI v10.0
+
+https://www.microsoft.com/en-us/download/details.aspx?id=57467
+
+Add C:\Program Files (x86)\Microsoft SDKs\MPI, C:\Program Files\Microsoft MPI\Bin (or appropriate directory on your machine) to System or User path and execute refreshenv in command line.
+
+```
+
+## Sampling
+
 To sample normally, run the following command. Model can be `5b`, `5b_lyrics`, `1b_lyrics`
 ``` 
 python jukebox/sample.py --model=5b_lyrics --name=sample_5b --levels=3 --sample_length_in_seconds=20 --total_sample_length_in_seconds=180 --sr=44100 --n_samples=6 --hop_fraction=0.5,0.5,0.125
@@ -52,8 +109,10 @@ python jukebox/sample.py --model=5b_lyrics --name=sample_5b_prompted --levels=3 
 ```
 This will load the four files, tile them to fill up to `n_samples` batch size, and prime the model with the first `prompt_length_in_seconds` seconds.
 
-# Training
+## Training
+
 ## VQVAE
+
 To train a small vqvae, run
 ```
 mpiexec -n {ngpus} python jukebox/train.py --hps=small_vqvae --name=small_vqvae --sample_length=262144 --bs=4 --nworkers=4 --audio_files_dir={audio_files_dir} --labels=False --train --aug_shift --aug_blend
@@ -66,7 +125,9 @@ tensorboard --logdir logs
 ```
     
 ## Prior
+
 ### Train prior or upsamplers
+
 Once the VQ-VAE is trained, we can restore it from its saved checkpoint and train priors on the learnt codes. 
 To train the top-level prior, we can run
 
@@ -82,6 +143,7 @@ We pass `sample_length = n_ctx * downsample_of_level` so that after downsampling
 Here, `n_ctx = 8192` and `downsamples = (32, 256)`, giving `sample_lengths = (8192 * 32, 8192 * 256) = (65536, 2097152)` respectively for the bottom and top level. 
 
 ### Reuse pre-trained VQ-VAE and retrain top level prior on new dataset.
+
 Our pre-trained VQ-VAE can produce compressed codes for a wide variety of genres of music, and the pre-trained upsamplers can upsample them back to audio that sound very similar to the original audio.
 To re-use these for a new dataset of your choice, you can retrain just the top-level  
 
@@ -93,7 +155,7 @@ mpiexec -n {ngpus} python jukebox/train.py --hps=vqvae,small_prior,all_fp16,cpu_
 You can then run sample.py with the top-level of our models replaced by your new model. To do so, add an entry `my_model` in MODELs (in `make_models.py`) with the (vqvae hps, upsampler hps, top-level prior hps) of your new model, and run sample.py with `--model=my_model`. 
 	
 
-# Citation
+## Citation
 
 Please cite using the following bibtex entry:
 
