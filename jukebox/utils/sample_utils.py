@@ -1,5 +1,6 @@
 import torch as t
 
+
 def split_batch(obj, n_samples, split_size):
     n_passes = (n_samples + split_size - 1) // split_size
     if isinstance(obj, t.Tensor):
@@ -10,6 +11,7 @@ def split_batch(obj, n_samples, split_size):
         return [None] * n_passes
     else:
         raise TypeError('Unknown input type')
+
 
 # Break total_length into hops/windows of size n_ctx separated by hop_length
 def get_starts(total_length, n_ctx, hop_length):

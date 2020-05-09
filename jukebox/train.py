@@ -21,13 +21,16 @@ from jukebox.utils.ema import CPUEMA, FusedEMA, EMA
 from jukebox.utils.fp16 import FP16FusedAdam, FusedAdam, LossScalar, clipped_grad_scale, backward
 from jukebox.data.data_processor import DataProcessor
 
+
 def prepare_aud(x, hps):
     x = audio_postprocess(x.detach().contiguous(), hps)
     return allgather(x)
 
+
 def log_aud(logger, tag, x, hps):
     logger.add_audios(tag, prepare_aud(x, hps), hps.sr, max_len=hps.max_len, max_log=hps.max_log)
     logger.flush()
+
 
 def log_labels(logger, labeller, tag, y, hps):
     y = y.cpu().numpy()
@@ -37,14 +40,17 @@ def log_labels(logger, labeller, tag, y, hps):
     logger.add_text(tag, txt)
     logger.flush()
 
+
 def get_ddp(model, hps):
     rank = dist.get_rank()
     local_rank = rank % 8
-    ddp = DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank, broadcast_buffers=False, bucket_cap_mb=hps.bucket)
+    ddp = DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank, broadcast_buffers=False,
+                                  bucket_cap_mb=hps.bucket)
     return ddp
 
+
 def get_ema(model, hps):
-    mu = hps.mu or (1. - (hps.bs * hps.ngpus/8.)/1000)
+    mu = hps.mu or (1. - (hps.bs * hps.ngpus / 8.) / 1000)
     ema = None
     if hps.ema and hps.train:
         if hps.cpu_ema:
@@ -56,6 +62,7 @@ def get_ema(model, hps):
         else:
             ema = EMA(model.parameters(), mu=mu)
     return ema
+
 
 def get_lr_scheduler(opt, hps):
     def lr_lambda(step):
@@ -73,6 +80,7 @@ def get_lr_scheduler(opt, hps):
 
     return shd
 
+
 def get_optimizer(model, hps):
     # Optimizer
     betas = (hps.beta1, hps.beta2)
@@ -89,11 +97,12 @@ def get_optimizer(model, hps):
     if hps.fp16:
         rank = dist.get_rank()
         local_rank = rank % 8
-        scalar = LossScalar(hps.fp16_loss_scale, scale_factor=2 ** (1./hps.fp16_scale_window))
+        scalar = LossScalar(hps.fp16_loss_scale, scale_factor=2 ** (1. / hps.fp16_scale_window))
         if local_rank == 0: print(scalar.__dict__)
 
     zero_grad(model)
     return opt, shd, scalar
+
 
 def log_inputs(orig_model, logger, x_in, y, x_out, hps, tag="train"):
     print(f"Logging {tag} inputs/ouputs")
@@ -108,6 +117,7 @@ def log_inputs(orig_model, logger, x_in, y, x_out, hps, tag="train"):
         for i in range(len(x_ds)):
             log_aud(logger, f'{tag}_x_ds_start_{i}', x_ds[i], hps)
     logger.flush()
+
 
 def sample_prior(orig_model, ema, logger, x_in, y, hps):
     if ema is not None: ema.swap()
@@ -143,6 +153,7 @@ def sample_prior(orig_model, ema, logger, x_in, y, hps):
     if ema is not None: ema.swap()
     logger.flush()
 
+
 def evaluate(model, orig_model, logger, metrics, data_processor, hps):
     model.eval()
     orig_model.eval()
@@ -163,7 +174,7 @@ def evaluate(model, orig_model, logger, metrics, data_processor, hps):
                 y = y.to('cuda', non_blocking=True)
 
             x_in = x = audio_preprocess(x, hps)
-            log_input_output = (i==0)
+            log_input_output = (i == 0)
 
             if hps.prior:
                 forw_kwargs = dict(y=y, fp16=hps.fp16, decode=log_input_output)
@@ -175,7 +186,7 @@ def evaluate(model, orig_model, logger, metrics, data_processor, hps):
             # Logging
             for key, val in _metrics.items():
                 _metrics[key] = val.item()
-            _metrics["loss"] = loss = loss.item() # Make sure to call to free graph
+            _metrics["loss"] = loss = loss.item()  # Make sure to call to free graph
 
             # Average and log
             for key, val in _metrics.items():
@@ -185,7 +196,7 @@ def evaluate(model, orig_model, logger, metrics, data_processor, hps):
                 if log_input_output:
                     log_inputs(orig_model, logger, x_in, y, x_out, hps)
 
-            logger.set_postfix(**{print_key:_metrics[key] for print_key, key in _print_keys.items()})
+            logger.set_postfix(**{print_key: _metrics[key] for print_key, key in _print_keys.items()})
 
     for key, val in _metrics.items():
         logger.add_scalar(f"test_{key}", metrics.avg(f"test_{key}"))
@@ -193,13 +204,15 @@ def evaluate(model, orig_model, logger, metrics, data_processor, hps):
     logger.close_range()
     return {key: metrics.avg(f"test_{key}") for key in _metrics.keys()}
 
+
 def train(model, orig_model, opt, shd, scalar, ema, logger, metrics, data_processor, hps):
     model.train()
     orig_model.train()
     if hps.prior:
         _print_keys = dict(l="loss", bpd="bpd", gn="gn", g_l="gen_loss", p_l="prime_loss")
     else:
-        _print_keys = dict(l="loss", sl="spectral_loss", rl="recons_loss", e="entropy", u="usage", uc="used_curr", gn="gn", pn="pn", dk="dk")
+        _print_keys = dict(l="loss", sl="spectral_loss", rl="recons_loss", e="entropy", u="usage", uc="used_curr",
+                           gn="gn", pn="pn", dk="dk")
 
     for i, x in logger.get_range(data_processor.train_loader):
         if isinstance(x, (tuple, list)):
@@ -224,7 +237,7 @@ def train(model, orig_model, opt, shd, scalar, ema, logger, metrics, data_proces
 
         # Backward
         loss, scale, grad_norm, overflow_loss, overflow_grad = backward(loss=loss, params=list(model.parameters()),
-                                                                         scalar=scalar, fp16=hps.fp16, logger=logger)
+                                                                        scalar=scalar, fp16=hps.fp16, logger=logger)
         # Skip step if overflow
         grad_norm = allreduce(grad_norm, op=dist.ReduceOp.MAX)
         if overflow_loss or overflow_grad or grad_norm > hps.ignore_grad_norm > 0:
@@ -239,12 +252,12 @@ def train(model, orig_model, opt, shd, scalar, ema, logger, metrics, data_proces
         if shd is not None: shd.step()
         if ema is not None: ema.step()
         next_lr = hps.lr if shd is None else shd.get_lr()[0]
-        finished_training = False #(next_lr == 0.0)
+        finished_training = False  # (next_lr == 0.0)
 
         # Logging
         for key, val in _metrics.items():
             _metrics[key] = val.item()
-        _metrics["loss"] = loss = loss.item() * hps.iters_before_update # Make sure to call to free graph
+        _metrics["loss"] = loss = loss.item() * hps.iters_before_update  # Make sure to call to free graph
         _metrics["gn"] = grad_norm
         _metrics["lr"] = lr
         _metrics["lg_loss_scale"] = np.log2(scale)
@@ -276,12 +289,13 @@ def train(model, orig_model, opt, shd, scalar, ema, logger, metrics, data_proces
             if log_input_output:
                 log_inputs(orig_model, logger, x_in, y, x_out, hps)
 
-        logger.set_postfix(**{print_key:_metrics[key] for print_key, key in _print_keys.items()})
+        logger.set_postfix(**{print_key: _metrics[key] for print_key, key in _print_keys.items()})
         if finished_training:
             dist.barrier()
             exit()
     logger.close_range()
     return {key: metrics.avg(key) for key in _metrics.keys()}
+
 
 def run(hps="teeny", port=29500, **kwargs):
     from jukebox.utils.dist_utils import setup_dist_from_mpi
@@ -319,7 +333,7 @@ def run(hps="teeny", port=29500, **kwargs):
             train_metrics = train(distributed_model, model, opt, shd, scalar, ema, logger, metrics, data_processor, hps)
             train_metrics['epoch'] = epoch
             if rank == 0:
-                print('Train',' '.join([f'{key}: {val:0.4f}' for key,val in train_metrics.items()]))
+                print('Train', ' '.join([f'{key}: {val:0.4f}' for key, val in train_metrics.items()]))
             dist.barrier()
 
         if hps.test:
@@ -327,10 +341,11 @@ def run(hps="teeny", port=29500, **kwargs):
             test_metrics = evaluate(distributed_model, model, logger, metrics, data_processor, hps)
             test_metrics['epoch'] = epoch
             if rank == 0:
-                print('Ema',' '.join([f'{key}: {val:0.4f}' for key,val in test_metrics.items()]))
+                print('Ema', ' '.join([f'{key}: {val:0.4f}' for key, val in test_metrics.items()]))
             dist.barrier()
             if ema: ema.swap()
         dist.barrier()
+
 
 if __name__ == '__main__':
     fire.Fire(run)

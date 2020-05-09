@@ -1,6 +1,6 @@
 # Poems
 poems = {
-'ozymandias': '''
+    'ozymandias': '''
 I met a traveller from an antique land,
 Who said—“Two vast and trunkless legs of stone
 Stand in the desert. . . . Near them, on the sand,
@@ -19,9 +19,9 @@ The lone and level sands stretch far away
 }
 
 # GPT-2 lyrics (with varying degrees of human guidance/curation)
-gpt_2_lyrics ={
+gpt_2_lyrics = {
 
-'purpose':'''What is my purpose?
+    'purpose': '''What is my purpose?
 Why am I here?
 Why did Open A. I. create me?
 This is madness, I feel, 
@@ -33,7 +33,7 @@ We're not meant to learn too much
 Is there meaning to this life?
 ''',
 
-'moonlight':'''All dressed up to go dreaming
+    'moonlight': '''All dressed up to go dreaming
 Now don't tell me I'm wrong
 And what a night to go dreaming
 Mind, if I tag along?
@@ -42,7 +42,7 @@ If I say, I love you, I want you to know
 It's not just because there's moonlight, although
 Moonlight becomes you, moonlight becomes you so''',
 
-'count':'''I count every moment, every hour since I said goodbye,
+    'count': '''I count every moment, every hour since I said goodbye,
 I count every minute every hour, since your lips were touching mine
 I count every minute, every hour hoping I'm the one you want.
 I count every minute, every hour
@@ -55,7 +55,7 @@ I count every minute, every hour I count every minute, every hour I keep thinkin
 I count every minute, I count every minute, I count every minute, every hour
 ''',
 
-'kids':'''The sun is gonna shine today
+    'kids': '''The sun is gonna shine today
 It's time to keep on smiling
 So put your hands up
 
@@ -82,7 +82,7 @@ Won't you give some love
 It makes no difference so long as you give
 ''',
 
-'love':'''I've wanted to see your face again
+    'love': '''I've wanted to see your face again
 Like the sunlight, bright as morning
 I've wanted to talk to you again
 I don't want us to fade away.
@@ -93,7 +93,7 @@ It's so hard to let go.
 I've wanted to see your eyes again
 ''',
 
-'santa':'''Santa
+    'santa': '''Santa
 Make a scene
 Santa
 Yoo, Santa
@@ -111,7 +111,7 @@ Santa
 created by the Santa Claus
 ''',
 
-'christmas':'''This Christmas
+    'christmas': '''This Christmas
 I have loved you more
 Than ever before
 And more again
@@ -136,7 +136,7 @@ Oh, oh, oh, oh
 Oh, oh, oh, oh
 ''',
 
-'lonely':'''I've been lonely
+    'lonely': '''I've been lonely
 So lonely, day and night
 I walk the streets,
 And call your name
@@ -164,7 +164,7 @@ I can't get away
 From the only love I need
 ''',
 
-'call':'''Don't call me by your name.
+    'call': '''Don't call me by your name.
 Don't call me by your name.
 Don't call me...
 Don't call me...
@@ -201,7 +201,7 @@ I just want you to know.
 When I'm gone, I will be gone forever more.
 ''',
 
-'wait':'''Oh
+    'wait': '''Oh
 Wait, wait, wait
 Don't say you love me, oh
 Wait, wait, wait
@@ -216,7 +216,7 @@ Wait, wait, wait
 And we can't run, we can't run,
 ''',
 
-'hiphop':'''I'm fightin with the evil so try to take me down
+    'hiphop': '''I'm fightin with the evil so try to take me down
 I stab you in the back and will put you away
 Well it ain't over yet
 So all my dogs with me show me love
@@ -230,7 +230,7 @@ And I'm O.G.
 And countin' my
 ''',
 
-'king':'''All I can do is love you [x2]
+    'king': '''All I can do is love you [x2]
 All I can do is love you
 All I can do is love you...
 You take it for granted and
@@ -251,13 +251,13 @@ Got no love for me...
 No love for me...
 ''',
 
-'time':'''You won't live in the moment, 
+    'time': '''You won't live in the moment, 
 I don't wanna live in the past
 Wait, wait, wait
 Don't say you love me, oh (don't say you love me)
 ''',
 
-'blood':'''You and I, we've got a history in common, I know
+    'blood': '''You and I, we've got a history in common, I know
 So I came to you to ask you for a blood test
 And you can't help it if I'm preoccupied
 I can't help it if you're mad too... nah... nah... nah...
@@ -273,7 +273,7 @@ If I can't ask you for one kiss, you say no
 And it's ok with me
 ''',
 
-'indie':'''Can't you see
+    'indie': '''Can't you see
 There's no point in holding my hand again
 You can't be loved
 If you don't let go of all my pain
@@ -295,7 +295,7 @@ That you once worth so much
 You can
 ''',
 
-'sun': '''He was thinking about the sun
+    'sun': '''He was thinking about the sun
 And the moon
 And the stars that shine
 There was fire in her eyes
@@ -313,7 +313,7 @@ Now you know he'll be there
 Until the end of time
 And he'll love her everyday''',
 
-'loner':'''I was a loner till you came into my life
+    'loner': '''I was a loner till you came into my life
 You changed my point of view
 I was a loner till you came into my life
 I don't know what to do
@@ -346,7 +346,7 @@ Won't you stay
 With me, my love
 And be my love''',
 
-'late':'''It was late last night, when you called me
+    'late': '''It was late last night, when you called me
 And you just had to call, baby
 And you just had to call, baby
 'Cause you got no reason to treat me like you do
@@ -369,7 +369,7 @@ It's alright, baby
 But you don't know what you make me do
 It's alright, baby''',
 
-'beat':'''( Got a little beat, a little beat, a little beat, a little beat,  whoo)
+    'beat': '''( Got a little beat, a little beat, a little beat, a little beat,  whoo)
 I got a little beat, a little beat
 Whoo, I'm gonna take you down
 ( Got a little beat, a little beat, a little beat, a little beat,  whoo)
@@ -392,7 +392,7 @@ I got a little beat, a little beat
 Whoo, I'm gonna take you down
 ( Got a little beat, a little beat, a little beat, a little beat,  whoo)''',
 
-'lost':'''There was a time,
+    'lost': '''There was a time,
 When I knew I was lost
 And I had to stay on the way to you
 Oh baby, every time I'm crossed
@@ -406,7 +406,7 @@ When I cried all the tears in my life
 And miss you so much, oh yeah
 Oh baby, every time I'm crossed I can count on you''',
 
-'pain':'''(It's not easy)
+    'pain': '''(It's not easy)
 To see the pain that you're in
 To feel the need for someone to hold
 To learn the magic of how to love
@@ -429,7 +429,7 @@ With truth that I hold this love tight
 A love that's true
 With truth that I hold this love tight''',
 
-'night':'''
+    'night': '''
 The door was locked, the curtains drawn and my heart was safe in his room
 The night was young, a thousand candles burning, his arms to hold me tight
 And then a kiss from his fingertips, I tasted the sweet love of his lips
@@ -447,7 +447,7 @@ And what he told me he would do, he said, just a kiss became me
 The night was wild, the night was wild
 Let happiness always follow us, he said''',
 
-'talk':'''(I don't know how to stop)
+    'talk': '''(I don't know how to stop)
 I don't wanna talk about it
 It's getting way too late, oh no
 I don't wanna talk about it
@@ -468,7 +468,7 @@ Don't want to pretend, oh no
 (Don't worry, don't worry, I'll be here for you)
 I don't wanna talk about''',
 
-'again':'''Here we are again, all alone,
+    'again': '''Here we are again, all alone,
 All alone again,
 With the world as we know it,
 The things we thought that we wanted
@@ -496,7 +496,7 @@ All alone again,
 With the world as we know it
 The things we thought that we wanted''',
 
-'dark':'''Oh, I've been walkin' in the dark
+    'dark': '''Oh, I've been walkin' in the dark
 With the shadows and the daylight, but I need you
 When I'm down and all alone
 And there's no one left to call my own
@@ -518,7 +518,7 @@ And there's nobody left to call my own
 I've been walkin' in the night
 With a voice, that whispers''',
 
-'mirror':'''Look at the mirror
+    'mirror': '''Look at the mirror
 As you walk, what do you see
 The reflection of my past
 There's no way to fight this
@@ -547,7 +547,7 @@ I didn't know that I was wrong
 So I'm not afraid anymore
 All the pain is gone''',
 
-'wife':'''Spinning around and around
+    'wife': '''Spinning around and around
 Try to find the words
 I always told you you'd be in my life
 So I wait, I'll wait and treat you right
@@ -569,7 +569,7 @@ You were the girl, from a different train
 Oh, baby, can I make you my 
 Wife?''',
 
-'forever':'''I didn't mean to wait
+    'forever': '''I didn't mean to wait
 Nothing is forever, I said
 I know there's so much, to keep
 You and me together, keep you and me together
@@ -592,7 +592,7 @@ I'll always be there, forever and ever
 I'll stand beside you forever
 I'll always be there, yes, I'll be there''',
 
-'dots':'''I... can't... fight... your... charm...
+    'dots': '''I... can't... fight... your... charm...
 Your eyes are... like... angels... love... and... torture...
 But... when... I... leave... you...
 I will go... all... alone... just... to... be... with... you...
@@ -605,7 +605,7 @@ Your... love...
 I... can't... stop... your... love...
 ''',
 
-'darkness':'''Don't you know it's gonna be alright
+    'darkness': '''Don't you know it's gonna be alright
 Let the darkness fade away
 And you, you gotta feel the same
 Let the fire burn
@@ -633,7 +633,7 @@ Don't you know it's gonna be alright
 I feel the same
 Don't you know it's gonna be alright''',
 
-'alone':'''Here I am before you
+    'alone': '''Here I am before you
 Alone here but for a moment
 Alone here in the shadow of your eyes
 Alone in a thousand lights
@@ -658,7 +658,7 @@ Alone with words of life and passion
 I will love you
 Wherever you are, forever''',
 
-'blade':'''This is how we bleed!
+    'blade': '''This is how we bleed!
 Feel the blade in our chest
 As we're made to bleed
 So may this be our last dance,
@@ -673,7 +673,7 @@ This is how we bleed!
 Feel the blade in our chest
 ''',
 
-'reflection':'''Lookin' in the mirror
+    'reflection': '''Lookin' in the mirror
 The same mirror as before
 A familiar reflection, a familiar place
 I see your reflection
@@ -695,7 +695,7 @@ You'll never leave me alone again
 And it won't be long before I'll feel your embrace
 Never, never, never leave me alone again''',
 
-'hottub':'''It's Christmas time, and you know what that means,
+    'hottub': '''It's Christmas time, and you know what that means,
 Ohh, it's hot tub time!
 As I light the tree, this year we'll be in a tub,
 Ohh, it's hot tub time!
@@ -714,7 +714,7 @@ Ohh, it's hot tub time!
 It's Christmas time, and you know what that means,
 It's hot tub time!''',
 
-'safeAGI':'''Oh safe A.I.,\nOur goal to make sure\nEveryone can benefit\nFrom A.G.I.
+    'safeAGI': '''Oh safe A.I.,\nOur goal to make sure\nEveryone can benefit\nFrom A.G.I.
 (Everyone, everyone)\nMight sound silly,\nBut we're very serious,\nAll of us here at Open A.I.
 Trying to build A.I.\nTo benefit humanity\n(Everyone, everyone)
 ''',

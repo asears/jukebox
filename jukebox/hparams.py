@@ -1,12 +1,14 @@
 HPARAMS_REGISTRY = {}
 DEFAULTS = {}
 
+
 class Hyperparams(dict):
     def __getattr__(self, attr):
         return self[attr]
 
     def __setattr__(self, attr, value):
         self[attr] = value
+
 
 def setup_hparams(hparam_set_names, kwargs):
     H = Hyperparams()
@@ -23,6 +25,7 @@ def setup_hparams(hparam_set_names, kwargs):
     H.update(**kwargs)
     return H
 
+
 # Teeny for testing
 teeny = Hyperparams(
 )
@@ -35,23 +38,23 @@ HPARAMS_REGISTRY["easy"] = easy
 
 # Model hps
 vqvae = Hyperparams(
-    levels = 3,
-    downs_t = (3, 2, 2),
-    strides_t = (2, 2, 2),
-    emb_width = 64,
-    l_bins = 2048,
-    l_mu = 0.99,
-    commit = 0.02,
-    spectral = 0.0,
-    multispectral = 1.0,
-    hvqvae_multipliers = (2, 1, 1),
-    loss_fn = 'lmix',
-    lmix_l2 = 1.0,
+    levels=3,
+    downs_t=(3, 2, 2),
+    strides_t=(2, 2, 2),
+    emb_width=64,
+    l_bins=2048,
+    l_mu=0.99,
+    commit=0.02,
+    spectral=0.0,
+    multispectral=1.0,
+    hvqvae_multipliers=(2, 1, 1),
+    loss_fn='lmix',
+    lmix_l2=1.0,
     lmix_linf=0.02,
-    width = 32,
-    depth = 4,
-    m_conv = 1.0,
-    dilation_growth_rate = 3,
+    width=32,
+    depth=4,
+    m_conv=1.0,
+    dilation_growth_rate=3,
     restore_vqvae=f'gs://jukebox-assets/models/5b/vqvae.pth.tar',
 )
 HPARAMS_REGISTRY["vqvae"] = vqvae
@@ -122,7 +125,6 @@ prior_5b.update(vqvae)
 prior_5b.update(labels)
 HPARAMS_REGISTRY["prior_5b"] = prior_5b
 
-
 prior_5b_lyrics = Hyperparams(
     level=2,
     n_ctx=8192,
@@ -187,21 +189,21 @@ HPARAMS_REGISTRY["prior_1b_lyrics"] = prior_1b_lyrics
 
 # Small models
 small_vqvae = Hyperparams(
-    sr = 22050,
-    levels = 2,
-    downs_t = (5, 3),
-    strides_t = (2, 2),
-    emb_width = 64,
-    l_bins = 1024,
-    l_mu = 0.99,
-    commit = 0.02,
-    spectral = 0.0,
-    multispectral = 1.0,
-    loss_fn = 'l2',
-    width = 32,
-    depth = 4,
-    m_conv = 1.0,
-    dilation_growth_rate = 3,
+    sr=22050,
+    levels=2,
+    downs_t=(5, 3),
+    strides_t=(2, 2),
+    emb_width=64,
+    l_bins=1024,
+    l_mu=0.99,
+    commit=0.02,
+    spectral=0.0,
+    multispectral=1.0,
+    loss_fn='l2',
+    width=32,
+    depth=4,
+    m_conv=1.0,
+    dilation_growth_rate=3,
 )
 HPARAMS_REGISTRY["small_vqvae"] = small_vqvae
 
@@ -301,8 +303,8 @@ DEFAULTS["data"] = Hyperparams(
 DEFAULTS["vqvae"] = Hyperparams(
     restore_vqvae='',
     levels=2,
-    downs_t=(1,1),
-    strides_t=(2,2),
+    downs_t=(1, 1),
+    strides_t=(2, 2),
     hvqvae_multipliers=None,
     revival_threshold=1.0,
     emb_width=64,
@@ -388,7 +390,7 @@ DEFAULTS["sample"] = Hyperparams(
 )
 
 DEFAULTS["prime"] = Hyperparams(
-    #encoder_kv_width=128,
+    # encoder_kv_width=128,
     prime_loss_fraction=0.1,
     restore_decoder='',
 )
@@ -489,9 +491,9 @@ DEFAULTS["audio"] = Hyperparams(
     max_silence_pad_length=0,
     ignore_boundaries=False,
     use_nonrelative_specloss=True,
-    multispec_loss_n_fft=(2048,1024,512),
-    multispec_loss_hop_length=(240,120,50),
-    multispec_loss_window_size=(1200,600,240),
+    multispec_loss_n_fft=(2048, 1024, 512),
+    multispec_loss_hop_length=(240, 120, 50),
+    multispec_loss_window_size=(1200, 600, 240),
 )
 
 DEFAULTS["distributed"] = Hyperparams(

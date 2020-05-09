@@ -3,6 +3,7 @@ import sys
 import subprocess
 from time import time
 
+
 def gs_download(gs_path, local_path, async_download=False):
     args = ['gsutil',
             '-o', 'GSUtil:parallel_thread_count=1',
@@ -27,6 +28,7 @@ def gs_upload(local_path, gs_path, async_upload=False):
     else:
         subprocess.call(args)
 
+
 def download(gs_path, local_path, async_download=False):
     remote_path = gs_path.replace("gs://", "https://storage.googleapis.com/")
     args = ['wget', '-q', '-O', local_path, remote_path]
@@ -34,6 +36,7 @@ def download(gs_path, local_path, async_download=False):
         subprocess.Popen(args)
     else:
         subprocess.call(args)
+
 
 def ls(regex):
     outputs = subprocess.check_output(['gsutil', 'ls', regex]).decode(sys.stdout.encoding)

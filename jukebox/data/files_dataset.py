@@ -7,6 +7,7 @@ from jukebox.utils.dist_utils import print_all
 from jukebox.utils.io import get_duration_sec, load_audio
 from jukebox.data.labels import Labeller
 
+
 class FilesAudioDataset(Dataset):
     def __init__(self, hps):
         super().__init__()
@@ -46,24 +47,23 @@ class FilesAudioDataset(Dataset):
         if self.labels:
             self.labeller = Labeller(hps.max_bow_genre_size, hps.n_tokens, self.sample_length, v3=hps.labels_v3)
 
-        self.t_ranges = ((self.min_duration*self.sr, self.max_duration*self.sr), # Total length
-                        (0.0,self.max_duration*self.sr),                          # Absolute pos
-                        (0.0,1.0))                                                  # Relative pos
-
+        self.t_ranges = ((self.min_duration * self.sr, self.max_duration * self.sr),  # Total length
+                         (0.0, self.max_duration * self.sr),  # Absolute pos
+                         (0.0, 1.0))  # Relative pos
 
     def get_index_offset(self, item):
         # For a given dataset item and shift, return song index and offset within song
-        half_interval = self.sample_length//2
+        half_interval = self.sample_length // 2
         shift = np.random.randint(-half_interval, half_interval) if self.aug_shift else 0
-        offset = item * self.sample_length + shift # Note we centred shifts, so adding now
+        offset = item * self.sample_length + shift  # Note we centred shifts, so adding now
         midpoint = offset + half_interval
         assert 0 <= midpoint < self.cumsum[-1], f'Midpoint {midpoint} of item beyond total length {self.cumsum[-1]}'
         index = np.searchsorted(self.cumsum, midpoint)  # index <-> midpoint of interval lies in this song
-        start, end = self.cumsum[index - 1] if index > 0 else 0.0, self.cumsum[index] # start and end of current song
+        start, end = self.cumsum[index - 1] if index > 0 else 0.0, self.cumsum[index]  # start and end of current song
         assert start <= midpoint <= end, f"Midpoint {midpoint} not inside interval [{start}, {end}] for index {index}"
-        if offset > end - self.sample_length: # Going over song
+        if offset > end - self.sample_length:  # Going over song
             offset = max(start, offset - half_interval)  # Now should fit
-        elif offset < start: # Going under song
+        elif offset < start:  # Going under song
             offset = min(end - self.sample_length, offset + half_interval)  # Now should fit
         assert start <= offset <= end - self.sample_length, f"Offset {offset} not in [{start}, {end - self.sample_length}]. End: {end}, SL: {self.sample_length}, Index: {index}"
         offset = offset - start
@@ -77,7 +77,8 @@ class FilesAudioDataset(Dataset):
     def get_song_chunk(self, index, offset, test=False):
         filename, total_length = self.files[index], self.durations[index]
         data, sr = load_audio(filename, sr=self.sr, offset=offset, duration=self.sample_length)
-        assert data.shape == (self.channels, self.sample_length), f'Expected {(self.channels, self.sample_length)}, got {data.shape}'
+        assert data.shape == (
+        self.channels, self.sample_length), f'Expected {(self.channels, self.sample_length)}, got {data.shape}'
         if self.labels:
             artist, genre, lyrics = self.get_metadata(filename, test)
             labels = self.labeller.get_label(artist, genre, lyrics, total_length, offset)

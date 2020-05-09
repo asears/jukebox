@@ -3,6 +3,7 @@ import numpy as np
 from jukebox.data.artist_genre_processor import ArtistGenreProcessor
 from jukebox.data.text_processor import TextProcessor
 
+
 # Linear window heurisic to get a window of lyric_tokens
 def get_relevant_lyric_tokens(full_tokens, n_tokens, total_length, offset, duration):
     if len(full_tokens) < n_tokens:
@@ -19,6 +20,7 @@ def get_relevant_lyric_tokens(full_tokens, n_tokens, total_length, offset, durat
     assert tokens == [full_tokens[index] if index != -1 else 0 for index in indices]
     return tokens, indices
 
+
 class Labeller():
     def __init__(self, max_genre_words, n_tokens, sample_length, v3=False):
         self.ag_processor = ArtistGenreProcessor(v3)
@@ -26,7 +28,7 @@ class Labeller():
         self.n_tokens = n_tokens
         self.max_genre_words = max_genre_words
         self.sample_length = sample_length
-        self.label_shape = (4 + self.max_genre_words + self.n_tokens, )
+        self.label_shape = (4 + self.max_genre_words + self.n_tokens,)
 
     def get_label(self, artist, genre, lyrics, total_length, offset):
         artist_id = self.ag_processor.get_artist_id(artist)
@@ -97,15 +99,10 @@ class Labeller():
 
 
 if __name__ == '__main__':
-    labeller = Labeller(5, 512, 8192*8*4*4, v3=False)
-    label = labeller.get_label("Alan Jackson", "Country Rock", "old town road", 4*60*44100, 0)
+    labeller = Labeller(5, 512, 8192 * 8 * 4 * 4, v3=False)
+    label = labeller.get_label("Alan Jackson", "Country Rock", "old town road", 4 * 60 * 44100, 0)
     print(label, labeller.describe_label(label['y']))
 
-    labeller = Labeller(1, 384, 6144*8*4*4, v3=True)
-    label = labeller.get_label("Alan Jackson", "Country Rock", "old town road", 4*60*44100, 0)
+    labeller = Labeller(1, 384, 6144 * 8 * 4 * 4, v3=True)
+    label = labeller.get_label("Alan Jackson", "Country Rock", "old town road", 4 * 60 * 44100, 0)
     print(label, labeller.describe_label(label['y']))
-
-
-
-
-

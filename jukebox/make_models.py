@@ -18,8 +18,9 @@ MODELS = {
     '5b': ("vqvae", "upsampler_level_0", "upsampler_level_1", "prior_5b"),
     '5b_lyrics': ("vqvae", "upsampler_level_0", "upsampler_level_1", "prior_5b_lyrics"),
     '1b_lyrics': ("vqvae", "upsampler_level_0", "upsampler_level_1", "prior_1b_lyrics"),
-    #'your_model': ("you_vqvae_here", "your_upsampler_here", ..., "you_top_level_prior_here")
+    # 'your_model': ("you_vqvae_here", "your_upsampler_here", ..., "you_top_level_prior_here")
 }
+
 
 def load_checkpoint(path):
     restore = path
@@ -38,15 +39,18 @@ def load_checkpoint(path):
     print("Restored from {}".format(restore))
     return checkpoint
 
+
 def save_checkpoint(logdir, name, model, opt, metrics, hps):
     with t.no_grad():
         save_hps = {**hps}
-        save_hps = {k: v for k,v in save_hps.items() if k not in ['metadata_v2','metadata_v3', 'alignments', 'lyric_processor', 'midi_processor']}
+        save_hps = {k: v for k, v in save_hps.items() if
+                    k not in ['metadata_v2', 'metadata_v3', 'alignments', 'lyric_processor', 'midi_processor']}
         t.save({'hps': save_hps,
-                'model': model.state_dict(), # should also save bottleneck k's as buffers
+                'model': model.state_dict(),  # should also save bottleneck k's as buffers
                 'opt': opt.state_dict() if opt is not None else None,
                 **metrics}, f'{logdir}/checkpoint_{name}.pth.tar')
     return
+
 
 def restore(hps, model, checkpoint_path):
     model.step = 0
@@ -60,6 +64,7 @@ def restore(hps, model, checkpoint_path):
         model.load_state_dict(checkpoint['model'])
         if 'step' in checkpoint: model.step = checkpoint['step']
 
+
 def make_vqvae(hps, device='cuda'):
     from jukebox.vqvae.vqvae import VQVAE
     block_kwargs = dict(width=hps.width, depth=hps.depth, m_conv=hps.m_conv,
@@ -72,9 +77,10 @@ def make_vqvae(hps, device='cuda'):
         downsamples = calculate_strides(hps.strides_t, hps.downs_t)
         top_raw_to_tokens = np.prod(downsamples)
         hps.sample_length = (hps.sample_length_in_seconds * hps.sr // top_raw_to_tokens) * top_raw_to_tokens
-        print(f"Setting sample length to {hps.sample_length} (i.e. {hps.sample_length/hps.sr} seconds) to be multiple of {top_raw_to_tokens}")
+        print(
+            f"Setting sample length to {hps.sample_length} (i.e. {hps.sample_length / hps.sr} seconds) to be multiple of {top_raw_to_tokens}")
 
-    vqvae = VQVAE(input_shape=(hps.sample_length,1), levels=hps.levels, downs_t=hps.downs_t, strides_t=hps.strides_t,
+    vqvae = VQVAE(input_shape=(hps.sample_length, 1), levels=hps.levels, downs_t=hps.downs_t, strides_t=hps.strides_t,
                   emb_width=hps.emb_width, l_bins=hps.l_bins,
                   mu=hps.l_mu, commit=hps.commit,
                   spectral=hps.spectral, multispectral=hps.multispectral,
@@ -99,6 +105,7 @@ def make_vqvae(hps, device='cuda'):
         freeze_model(vqvae)
     return vqvae
 
+
 def make_prior(hps, vqvae, device='cuda'):
     from jukebox.prior.prior import SimplePrior
 
@@ -109,7 +116,8 @@ def make_prior(hps, vqvae, device='cuda'):
                         zero_out=hps.zero_out, res_scale=hps.res_scale, pos_init=hps.pos_init,
                         init_scale=hps.init_scale,
                         m_attn=hps.m_attn, m_mlp=hps.m_mlp,
-                        checkpoint_res=hps.c_res if hps.train else 0, checkpoint_attn=hps.c_attn if hps.train else 0, checkpoint_mlp=hps.c_mlp if hps.train else 0)
+                        checkpoint_res=hps.c_res if hps.train else 0, checkpoint_attn=hps.c_attn if hps.train else 0,
+                        checkpoint_mlp=hps.c_mlp if hps.train else 0)
 
     x_cond_kwargs = dict(out_width=hps.prior_width, init_scale=hps.init_scale,
                          width=hps.cond_width, depth=hps.cond_depth, m_conv=hps.cond_m_conv,
@@ -119,7 +127,6 @@ def make_prior(hps, vqvae, device='cuda'):
     y_cond_kwargs = dict(out_width=hps.prior_width, init_scale=hps.init_scale,
                          y_bins=hps.y_bins, t_bins=hps.t_bins, t_ranges=hps.t_ranges,
                          max_bow_genre_size=hps.max_bow_genre_size)
-
 
     if hps.use_tokens and not hps.single_enc_dec:
         prime_kwargs = dict(use_tokens=hps.use_tokens, prime_loss_fraction=hps.prime_loss_fraction,
@@ -131,14 +138,15 @@ def make_prior(hps, vqvae, device='cuda'):
                             zero_out=hps.prime_zero_out, res_scale=hps.prime_res_scale,
                             pos_init=hps.prime_pos_init, init_scale=hps.prime_init_scale,
                             m_attn=hps.prime_m_attn, m_mlp=hps.prime_m_mlp,
-                            checkpoint_res=hps.prime_c_res if hps.train else 0, checkpoint_attn=hps.prime_c_attn if hps.train else 0,
+                            checkpoint_res=hps.prime_c_res if hps.train else 0,
+                            checkpoint_attn=hps.prime_c_attn if hps.train else 0,
                             checkpoint_mlp=hps.prime_c_mlp if hps.train else 0)
     else:
         prime_kwargs = dict(use_tokens=hps.use_tokens, prime_loss_fraction=hps.prime_loss_fraction,
                             n_tokens=hps.n_tokens, bins=hps.n_vocab)
 
     # z_shapes for other levels given this level gets n_ctx codes
-    rescale = lambda z_shape: (z_shape[0]*hps.n_ctx//vqvae.z_shapes[hps.level][0],)
+    rescale = lambda z_shape: (z_shape[0] * hps.n_ctx // vqvae.z_shapes[hps.level][0],)
     z_shapes = [rescale(z_shape) for z_shape in vqvae.z_shapes]
 
     prior = SimplePrior(z_shapes=z_shapes,
@@ -176,14 +184,18 @@ def make_prior(hps, vqvae, device='cuda'):
         freeze_model(prior)
     return prior
 
+
 def make_model(model, device, hps, levels=None):
     vqvae, *priors = MODELS[model]
-    vqvae = make_vqvae(setup_hparams(vqvae, dict(sample_length=hps.get('sample_length', 0), sample_length_in_seconds=hps.get('sample_length_in_seconds', 0))), device)
+    vqvae = make_vqvae(setup_hparams(vqvae, dict(sample_length=hps.get('sample_length', 0),
+                                                 sample_length_in_seconds=hps.get('sample_length_in_seconds', 0))),
+                       device)
     hps.sample_length = vqvae.sample_length
     if levels is None:
         levels = range(len(priors))
     priors = [make_prior(setup_hparams(priors[level], dict()), vqvae, 'cpu') for level in levels]
     return vqvae, priors
+
 
 def save_outputs(model, device, hps):
     # Check logits
@@ -221,7 +233,9 @@ def save_outputs(model, device, hps):
         prior = priors[level]
         prior.cuda()
         x_in = x[:, :n_ctx * 8 * (4 ** level)]
-        y_in = t.from_numpy(prior.labeller.get_y_from_ids(artist_id, genre_ids, lyric_tokens, total_length, offset)).view(1, -1).cuda().long()
+        y_in = t.from_numpy(
+            prior.labeller.get_y_from_ids(artist_id, genre_ids, lyric_tokens, total_length, offset)).view(1,
+                                                                                                          -1).cuda().long()
         x_out, _, metrics = prior(x_in, y_in, fp16=hps.fp16, get_preds=True, decode=True)
         preds = metrics['preds']
         data[level] = dict(x=x_in, y=y_in, x_out=x_out, preds=preds)
@@ -239,6 +253,7 @@ def run(model, port=29500, **kwargs):
 
     with t.no_grad():
         save_outputs(model, device, hps)
+
 
 if __name__ == '__main__':
     fire.Fire(run)

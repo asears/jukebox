@@ -12,13 +12,14 @@ from jukebox.utils.torch_utils import assert_shape
 from jukebox.utils.dist_utils import print_once
 from jukebox.vqvae.vqvae import calculate_strides
 
-
 """
 TODO: Simplify this into an easier structure
 
 enc-dec prior vs single-transformer prior
 remove the vqvae pre-post processing into a separate vqvae-coder class
 """
+
+
 class SimplePrior(nn.Module):
     def __init__(self, z_shapes, l_bins, encoder, decoder, level,
                  downs_t, strides_t, labels, prior_kwargs, x_cond_kwargs, y_cond_kwargs,
@@ -60,17 +61,17 @@ class SimplePrior(nn.Module):
         if self.x_cond:
             self.conditioner_blocks = nn.ModuleList()
             conditioner_block = lambda _level: Conditioner(input_shape=z_shapes[_level],
-                                                          bins=l_bins,
-                                                          down_t=downs_t[_level],
-                                                          stride_t=strides_t[_level],
-                                                          **x_cond_kwargs)
+                                                           bins=l_bins,
+                                                           down_t=downs_t[_level],
+                                                           stride_t=strides_t[_level],
+                                                           **x_cond_kwargs)
             if dist.get_rank() == 0: print(f"Conditioning on 1 above level(s)")
             self.conditioner_blocks.append(conditioner_block(self.cond_level))
 
         # Y conditioning
         if self.y_cond:
-            self.n_time = self.z_shape[0] # Assuming STFT=TF order and raw=T1 order, so T is first dim
-            self.y_emb = LabelConditioner(n_time=self.n_time,include_time_signal=not self.x_cond,**y_cond_kwargs)
+            self.n_time = self.z_shape[0]  # Assuming STFT=TF order and raw=T1 order, so T is first dim
+            self.y_emb = LabelConditioner(n_time=self.n_time, include_time_signal=not self.x_cond, **y_cond_kwargs)
 
         # Lyric conditioning
         if single_enc_dec:
@@ -102,10 +103,12 @@ class SimplePrior(nn.Module):
                 prime_input_shape = (self.n_tokens,)
                 self.prime_loss_dims = np.prod(prime_input_shape)
                 self.prime_acts_width, self.prime_state_width = prime_kwargs['width'], prior_kwargs['width']
-                self.prime_prior = ConditionalAutoregressive2D(input_shape=prime_input_shape, x_cond=False, y_cond=False,
+                self.prime_prior = ConditionalAutoregressive2D(input_shape=prime_input_shape, x_cond=False,
+                                                               y_cond=False,
                                                                only_encode=True,
                                                                **prime_kwargs)
-                self.prime_state_proj = Conv1D(self.prime_acts_width, self.prime_state_width, init_scale=prime_kwargs['init_scale'])
+                self.prime_state_proj = Conv1D(self.prime_acts_width, self.prime_state_width,
+                                               init_scale=prime_kwargs['init_scale'])
                 self.prime_state_ln = LayerNorm(self.prime_state_width)
                 self.prime_bins = prime_kwargs['bins']
                 self.prime_x_out = nn.Linear(self.prime_state_width, self.prime_bins, bias=False)
@@ -115,20 +118,21 @@ class SimplePrior(nn.Module):
             self.gen_loss_dims = np.prod(self.z_shape)
             self.total_loss_dims = self.prime_loss_dims + self.gen_loss_dims
             self.prior = ConditionalAutoregressive2D(x_cond=(self.x_cond or self.y_cond), y_cond=self.y_cond,
-                                                     encoder_dims = self.prime_loss_dims, merged_decoder=merged_decoder,
+                                                     encoder_dims=self.prime_loss_dims, merged_decoder=merged_decoder,
                                                      **prior_kwargs)
 
         self.n_ctx = self.gen_loss_dims
         self.downsamples = calculate_strides(strides_t, downs_t)
-        self.cond_downsample = self.downsamples[level+1] if level != self.levels - 1 else None
-        self.raw_to_tokens = np.prod(self.downsamples[:level+1])
-        self.sample_length = self.n_ctx*self.raw_to_tokens
+        self.cond_downsample = self.downsamples[level + 1] if level != self.levels - 1 else None
+        self.raw_to_tokens = np.prod(self.downsamples[:level + 1])
+        self.sample_length = self.n_ctx * self.raw_to_tokens
         if labels:
             self.labels_v3 = labels_v3
-            self.labeller = Labeller(self.y_emb.max_bow_genre_size, self.n_tokens, self.sample_length, v3=self.labels_v3)
+            self.labeller = Labeller(self.y_emb.max_bow_genre_size, self.n_tokens, self.sample_length,
+                                     v3=self.labels_v3)
 
-        print(f"Level:{level}, Cond downsample:{self.cond_downsample}, Raw to tokens:{self.raw_to_tokens}, Sample length:{self.sample_length}")
-
+        print(
+            f"Level:{level}, Cond downsample:{self.cond_downsample}, Raw to tokens:{self.raw_to_tokens}, Sample length:{self.sample_length}")
 
     def get_y(self, labels, start, get_indices=False):
         y = labels['y'].clone()
@@ -149,8 +153,8 @@ class SimplePrior(nn.Module):
     def get_z_conds(self, zs, start, end):
         if self.level != self.levels - 1:
             assert start % self.cond_downsample == end % self.cond_downsample == 0
-            z_cond = zs[self.level + 1][:,start//self.cond_downsample:end//self.cond_downsample]
-            assert z_cond.shape[1] == self.n_ctx//self.cond_downsample
+            z_cond = zs[self.level + 1][:, start // self.cond_downsample:end // self.cond_downsample]
+            assert z_cond.shape[1] == self.n_ctx // self.cond_downsample
             z_conds = [z_cond]
         else:
             z_conds = None
@@ -163,7 +167,7 @@ class SimplePrior(nn.Module):
             bins, bins_shift = int(self.prior_bins[i]), int(self.prior_bins_shift[i])
             assert isinstance(x, t.cuda.LongTensor), x
             assert (0 <= x).all() and (x < bins).all()
-            #assert_shape(x, (N, *shape))
+            # assert_shape(x, (N, *shape))
             xs[i] = (xs[i] + bins_shift).view(N, -1)
 
         for i in range(len(conds)):
@@ -188,14 +192,17 @@ class SimplePrior(nn.Module):
             bins, bins_shift = int(self.prior_bins[i]), int(self.prior_bins_shift[i])
             # xs[i] = (xs[i] - bins_shift).view(N, *shape) #view(N, -1, *shape[1:])
             xs[i] = (xs[i] - bins_shift).view(N, -1, *shape[1:])
-            xs[i] = t.clamp(xs[i], min=0)  # If not masking loss, model may have generated lyric/midi tokens which are now shifted <0 by bin_shift
-            assert (xs[i] < bins).all(), f'rank: {dist.get_rank()}, bins: {bins}, dims {dims}, shape {shape}, prior_shape {self.prior_shapes}, bins_shift {bins_shift}, xs[i]: {xs[i]}'
+            xs[i] = t.clamp(xs[i],
+                            min=0)  # If not masking loss, model may have generated lyric/midi tokens which are now shifted <0 by bin_shift
+            assert (xs[
+                        i] < bins).all(), f'rank: {dist.get_rank()}, bins: {bins}, dims {dims}, shape {shape}, prior_shape {self.prior_shapes}, bins_shift {bins_shift}, xs[i]: {xs[i]}'
 
         return xs[-1]
 
     def x_emb(self, z_conds):
         z_conds = z_conds[:self.cond_level - self.level]
-        assert len(z_conds) == len(self.conditioner_blocks) == self.cond_level - self.level, f"Expected {len(z_conds)} == {len(self.conditioner_blocks)} == {self.cond_level} - {self.level}"
+        assert len(z_conds) == len(
+            self.conditioner_blocks) == self.cond_level - self.level, f"Expected {len(z_conds)} == {len(self.conditioner_blocks)} == {self.cond_level} - {self.level}"
         x_cond = None
         for z_cond, conditioner_block in reversed(list(zip(z_conds, self.conditioner_blocks))):
             x_cond = conditioner_block(z_cond, x_cond)
@@ -224,9 +231,10 @@ class SimplePrior(nn.Module):
 
     def get_cond(self, z_conds, y):
         if y is not None:
-            assert y.shape[1] == 4 + self.y_emb.max_bow_genre_size + self.n_tokens, f"Expected {4} + {self.y_emb.max_bow_genre_size} + {self.n_tokens}, got {y.shape[1]}"
+            assert y.shape[
+                       1] == 4 + self.y_emb.max_bow_genre_size + self.n_tokens, f"Expected {4} + {self.y_emb.max_bow_genre_size} + {self.n_tokens}, got {y.shape[1]}"
             n_labels = y.shape[1] - self.n_tokens
-            y, prime = y[:,:n_labels], y[:,n_labels:]
+            y, prime = y[:, :n_labels], y[:, n_labels:]
         else:
             y, prime = None, None
         y_cond, y_pos = self.y_emb(y) if self.y_cond else (None, None)
@@ -240,7 +248,7 @@ class SimplePrior(nn.Module):
         if y is not None: assert y.shape[0] == N, f"Expected shape ({N},**), got shape {y.shape}"
         if z_conds is not None:
             for z_cond in z_conds:
-                assert z_cond.shape[0] == N,  f"Expected shape ({N},**), got shape {z_cond.shape}"
+                assert z_cond.shape[0] == N, f"Expected shape ({N},**), got shape {z_cond.shape}"
 
         no_past_context = (z is None or z.shape[1] == 0)
         if dist.get_rank() == 0:
@@ -259,7 +267,8 @@ class SimplePrior(nn.Module):
                 if sample_tokens is not None:
                     sample_tokens += self.n_tokens
                 z = self.prior.primed_sample(n_samples, z, x_cond, y_cond, fp16=fp16, temp=temp,
-                                             top_k=top_k, top_p=top_p, chunk_size=chunk_size, sample_tokens=sample_tokens)
+                                             top_k=top_k, top_p=top_p, chunk_size=chunk_size,
+                                             sample_tokens=sample_tokens)
                 z = self.prior_postprocess(z)
             else:
                 encoder_kv = self.get_encoder_kv(prime, fp16=fp16, sample=True)
@@ -268,7 +277,8 @@ class SimplePrior(nn.Module):
                                           top_p=top_p, sample_tokens=sample_tokens)
                 else:
                     z = self.prior.primed_sample(n_samples, z, x_cond, y_cond, encoder_kv, fp16=fp16, temp=temp,
-                                             top_k=top_k, top_p=top_p, chunk_size=chunk_size, sample_tokens=sample_tokens)
+                                                 top_k=top_k, top_p=top_p, chunk_size=chunk_size,
+                                                 sample_tokens=sample_tokens)
             if sample_tokens is None:
                 assert_shape(z, (N, *self.z_shape))
         return z
@@ -295,7 +305,8 @@ class SimplePrior(nn.Module):
         if self.use_tokens:
             encoder_kv = encoder_kv.float()
             encoder_kv = self.prime_x_out(encoder_kv)
-            prime_loss = nn.functional.cross_entropy(encoder_kv.view(-1, self.prime_bins), prime_t.view(-1)) / np.log(2.)
+            prime_loss = nn.functional.cross_entropy(encoder_kv.view(-1, self.prime_bins), prime_t.view(-1)) / np.log(
+                2.)
         else:
             prime_loss = t.tensor(0.0, device='cuda')
         return prime_loss
@@ -313,18 +324,19 @@ class SimplePrior(nn.Module):
             self.prior.transformer.set_record_attn(get_attn_weights)
         x_cond, y_cond, prime = self.get_cond(z_conds, y)
         if self.copy_input:
-            prime = z[:,:self.n_tokens]
+            prime = z[:, :self.n_tokens]
         if self.single_enc_dec:
             z, x_cond = self.prior_preprocess([prime, z], [None, x_cond])
-            (prime_loss, gen_loss), preds = self.prior(z, x_cond, y_cond, fp16=fp16, get_sep_loss=True, get_preds=get_preds)
+            (prime_loss, gen_loss), preds = self.prior(z, x_cond, y_cond, fp16=fp16, get_sep_loss=True,
+                                                       get_preds=get_preds)
         else:
             encoder_kv = self.get_encoder_kv(prime, fp16=fp16)
             prime_loss = self.get_prime_loss(encoder_kv, prime)
             gen_loss, preds = self.prior(z, x_cond, y_cond, encoder_kv, fp16=fp16, get_preds=get_preds)
-        loss = (self.prime_loss_fraction*prime_loss*self.prime_loss_dims/self.total_loss_dims) + \
-                   (gen_loss*self.gen_loss_dims/self.total_loss_dims)
-        metrics=dict(bpd=gen_loss.clone().detach(), prime_loss=prime_loss.clone().detach(),
-                     gen_loss=gen_loss.clone().detach())
+        loss = (self.prime_loss_fraction * prime_loss * self.prime_loss_dims / self.total_loss_dims) + \
+               (gen_loss * self.gen_loss_dims / self.total_loss_dims)
+        metrics = dict(bpd=gen_loss.clone().detach(), prime_loss=prime_loss.clone().detach(),
+                       gen_loss=gen_loss.clone().detach())
         if get_preds:
             metrics["preds"] = preds.clone().detach()
         if get_attn_weights:

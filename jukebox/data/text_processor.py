@@ -1,6 +1,7 @@
 import re
 from unidecode import unidecode
 
+
 class TextProcessor():
     def __init__(self, v3=False):
         if v3:

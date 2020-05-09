@@ -7,10 +7,12 @@ accepted = frozenset([chr(i) for i in range(ord('a'), ord('z') + 1)] +
 
 rex = re.compile(r'_+')
 
+
 def norm(s):
     s = ''.join([c if c in accepted else '_' for c in s.lower()])
     s = rex.sub('_', s).strip('_')
     return s
+
 
 def create_reverse_lookup(atoi):
     # Multiple entries could go to the same artist_id/genre_id
@@ -23,6 +25,7 @@ def create_reverse_lookup(atoi):
     for i in indices:
         itoa[i] = '_'.join(sorted(itoa[i]))
     return itoa
+
 
 class ArtistGenreProcessor():
     def __init__(self, v3=False):
@@ -81,5 +84,3 @@ class ArtistGenreProcessor():
                 genre, genre_id = line.strip().split(';')
                 self.genre_ids[genre.lower()] = int(genre_id)
         self.genres = create_reverse_lookup(self.genre_ids)
-
-

@@ -3,6 +3,7 @@ import av
 import torch as t
 import torch.distributed as dist
 
+
 def get_duration_sec(file, cache=False):
     try:
         with open(file + '.dur', 'r') as f:
@@ -17,35 +18,37 @@ def get_duration_sec(file, cache=False):
                 f.write(str(duration) + '\n')
         return duration
 
+
 def load_audio(file, sr, offset, duration, resample=True, approx=False, time_base='samples', check_duration=True):
     if time_base == 'sec':
         offset = offset * sr
         duration = duration * sr
     # Loads at target sr, stereo channels, seeks from offset, and stops after duration
     container = av.open(file)
-    audio = container.streams.get(audio=0)[0] # Only first audio stream
+    audio = container.streams.get(audio=0)[0]  # Only first audio stream
     audio_duration = audio.duration * float(audio.time_base)
     if approx:
-        if offset + duration > audio_duration*sr:
+        if offset + duration > audio_duration * sr:
             # Move back one window. Cap at audio_duration
-            offset = np.min(audio_duration*sr - duration, offset - duration)
+            offset = np.min(audio_duration * sr - duration, offset - duration)
     else:
         if check_duration:
-            assert offset + duration <= audio_duration*sr, f'End {offset + duration} beyond duration {audio_duration*sr}'
+            assert offset + duration <= audio_duration * sr, f'End {offset + duration} beyond duration {audio_duration * sr}'
     if resample:
-        resampler = av.AudioResampler(format='fltp',layout='stereo', rate=sr)
+        resampler = av.AudioResampler(format='fltp', layout='stereo', rate=sr)
     else:
         assert sr == audio.sample_rate
-    offset = int(offset / sr / float(audio.time_base)) #int(offset / float(audio.time_base)) # Use units of time_base for seeking
-    duration = int(duration) #duration = int(duration * sr) # Use units of time_out ie 1/sr for returning
+    offset = int(offset / sr / float(
+        audio.time_base))  # int(offset / float(audio.time_base)) # Use units of time_base for seeking
+    duration = int(duration)  # duration = int(duration * sr) # Use units of time_out ie 1/sr for returning
     sig = np.zeros((2, duration), dtype=np.float32)
     container.seek(offset, stream=audio)
     total_read = 0
-    for frame in container.decode(audio=0): # Only first audio stream
+    for frame in container.decode(audio=0):  # Only first audio stream
         if resample:
             frame.pts = None
             frame = resampler.resample(frame)
-        frame = frame.to_ndarray(format='fltp') # Convert to floats and not int16
+        frame = frame.to_ndarray(format='fltp')  # Convert to floats and not int16
         read = frame.shape[-1]
         if total_read + read > duration:
             read = duration - total_read
@@ -55,6 +58,7 @@ def load_audio(file, sr, offset, duration, resample=True, approx=False, time_bas
             break
     assert total_read <= duration, f'Expected {duration} frames, got {total_read}'
     return sig, sr
+
 
 def test_simple_loader():
     import librosa
@@ -79,10 +83,11 @@ def test_simple_loader():
     print("Loader", loader.__name__)
     x = t.randn(2, 2).cuda()
     x = load(files[0], loader)
-    for i,file in enumerate(tqdm(files)):
+    for i, file in enumerate(tqdm(files)):
         x = load(file, loader)
         if i == 100:
             break
+
 
 def test_dataset_loader():
     from tqdm import tqdm
@@ -98,7 +103,7 @@ def test_dataset_loader():
     hps.channels = 2
     hps.aug_shift = False
     hps.bs = 2
-    hps.nworkers = 2 # Getting 20 it/s with 2 workers, 10 it/s with 1 worker
+    hps.nworkers = 2  # Getting 20 it/s with 2 workers, 10 it/s with 1 worker
     print(hps)
     dataset = hps.dataset
     root = hps.root
@@ -119,18 +124,19 @@ def test_dataset_loader():
     for i, x in enumerate(tqdm(train_loader)):
         x = x.to('cuda', non_blocking=True)
         for j, aud in enumerate(x):
-            writer.add_audio('in_' + str(i*hps.bs + j), aud, 1, hps.sr)
+            writer.add_audio('in_' + str(i * hps.bs + j), aud, 1, hps.sr)
         print("Wrote in")
         x = audio_preprocess(x, hps)
         x = audio_postprocess(x, hps)
         for j, aud in enumerate(x):
-            writer.add_audio('out_' + str(i*hps.bs + j), aud, 1, hps.sr)
+            writer.add_audio('out_' + str(i * hps.bs + j), aud, 1, hps.sr)
         print("Wrote out")
         dist.barrier()
         break
 
+
 if __name__ == '__main__':
     from jukebox.utils.dist_utils import setup_dist_from_mpi
+
     setup_dist_from_mpi(port=29500)
     test_dataset_loader()
-

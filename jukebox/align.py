@@ -12,8 +12,9 @@ from jukebox.save_html import save_html
 from jukebox.utils.sample_utils import get_starts
 import fire
 
+
 def get_alignment(x, zs, labels, prior, fp16, hps):
-    level = hps.levels - 1 # Top level used
+    level = hps.levels - 1  # Top level used
     n_ctx, n_tokens = prior.n_ctx, prior.n_tokens
     z = zs[level]
     bs, total_length = z.shape[0], z.shape[1]
@@ -24,7 +25,7 @@ def get_alignment(x, zs, labels, prior, fp16, hps):
     else:
         padding_length = 0
 
-    hop_length = int(hps.hop_fraction[level]*prior.n_ctx)
+    hop_length = int(hps.hop_fraction[level] * prior.n_ctx)
     n_head = prior.prior.transformer.n_head
     alignment_head, alignment_layer = prior.alignment_head, prior.alignment_layer
     attn_layers = set([alignment_layer])
@@ -46,7 +47,7 @@ def get_alignment(x, zs, labels, prior, fp16, hps):
         y_bs = t.chunk(y, bs, dim=0)
         w_hops = []
         for z_i, y_i in zip(z_bs, y_bs):
-            w_hop = prior.z_forward(z_i[:,start:end], [], y_i, fp16=fp16, get_attn_weights=attn_layers)
+            w_hop = prior.z_forward(z_i[:, start:end], [], y_i, fp16=fp16, get_attn_weights=attn_layers)
             assert len(w_hop) == 1
             w_hops.append(w_hop[0][:, alignment_head])
             del w_hop
@@ -77,10 +78,11 @@ def get_alignment(x, zs, labels, prior, fp16, hps):
             indices = indices_hops[start][item]
             assert len(indices) == n_tokens
             assert alignment_hop.shape == (n_ctx, n_tokens)
-            alignment[start:end,indices] = alignment_hop
-        alignment = alignment[:total_length - padding_length,:-1] # remove token padding, and last lyric index
+            alignment[start:end, indices] = alignment_hop
+        alignment = alignment[:total_length - padding_length, :-1]  # remove token padding, and last lyric index
         alignments.append(alignment)
     return alignments
+
 
 def save_alignment(model, device, hps):
     print(hps)
@@ -97,6 +99,7 @@ def save_alignment(model, device, hps):
     t.save(data, f"{logdir}/data_align.pth.tar")
     save_html(logdir, data['x'], data['zs'], data['labels'][-1], data['alignments'], hps)
 
+
 def run(model, port=29500, **kwargs):
     from jukebox.utils.dist_utils import setup_dist_from_mpi
     rank, local_rank, device = setup_dist_from_mpi(port=port)
@@ -105,11 +108,6 @@ def run(model, port=29500, **kwargs):
     with t.no_grad():
         save_alignment(model, device, hps)
 
+
 if __name__ == '__main__':
     fire.Fire(run)
-
-
-
-
-
-

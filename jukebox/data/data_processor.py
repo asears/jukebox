@@ -6,6 +6,7 @@ from jukebox.utils.dist_utils import print_all
 from jukebox.utils.audio_utils import calculate_bandwidth
 from jukebox.data.files_dataset import FilesAudioDataset
 
+
 class OffsetDataset(Dataset):
     def __init__(self, dataset, start, end, test=False):
         super().__init__()
@@ -20,6 +21,7 @@ class OffsetDataset(Dataset):
 
     def __getitem__(self, item):
         return self.dataset.get_item(self.start + item, test=self.test)
+
 
 class DataProcessor():
     def __init__(self, hps):

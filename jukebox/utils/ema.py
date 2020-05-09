@@ -2,6 +2,7 @@ import torch
 from torch._utils import _flatten_dense_tensors
 import numpy as np
 
+
 # EMA always in float, as accumulation needs lots of bits
 class EMA:
     def __init__(self, params, mu=0.999):
@@ -25,7 +26,7 @@ class EMA:
 
 class CPUEMA:
     def __init__(self, params, mu=0.999, freq=1):
-        self.mu = mu**freq
+        self.mu = mu ** freq
         self.state = [(p, self.get_model_state(p)) for p in params if p.requires_grad]
         self.freq = freq
         self.steps = 0
@@ -52,6 +53,7 @@ class CPUEMA:
                 other_state = self.get_model_state(p)
                 p.data.copy_(torch.from_numpy(state).type_as(p.data))
                 np.copyto(state, other_state)
+
 
 class FusedEMA:
     def __init__(self, params, mu=0.999):
@@ -90,5 +92,3 @@ class FusedEMA:
                 offset += numel
 
             self.state[group] = other_state
-
-
